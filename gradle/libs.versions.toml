@@ -1,0 +1,11 @@
+[versions]
+agp = "9.2.1"
+recaptcha = "18.9.2"
+junit = "4.13.2"
+
+[libraries]
+recaptcha = { group = "com.google.android.recaptcha", name = "recaptcha", version.ref = "recaptcha" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }

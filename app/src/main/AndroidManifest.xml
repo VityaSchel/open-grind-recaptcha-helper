@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <permission
+        android:name="org.opengrind.recaptcha.permission.MINT_TOKEN"
+        android:protectionLevel="signature" />
+
+    <queries>
+        <package android:name="org.opengrind" />
+        <package android:name="com.grindrapp.android" />
+    </queries>
+
+    <application
+        android:name=".GrindrBoundApplication"
+        android:allowBackup="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.OpenGrindRecaptchaHelper">
+
+        <activity
+            android:name=".MintTokenActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density|fontScale|locale|layoutDirection"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:permission="org.opengrind.recaptcha.permission.MINT_TOKEN">
+            <intent-filter>
+                <action android:name="org.opengrind.recaptcha.action.MINT_TOKEN" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+    </application>
+
+</manifest>

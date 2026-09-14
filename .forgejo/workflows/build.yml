@@ -1,0 +1,99 @@
+name: build
+
+on:
+  workflow_dispatch:
+    inputs:
+      providers:
+        description: builders to compare
+        type: choice
+        default: all
+        options: [all, cherry, vultr, hetzner]
+
+concurrency:
+  group: recaptcha-helper-build
+  cancel-in-progress: false
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        provider: >-
+          ${{ fromJson(inputs.providers == 'all' && '["cherry","vultr","hetzner"]'
+          || format('["{0}"]', inputs.providers)) }}
+    runs-on: ["build", "${{ matrix.provider }}"]
+    timeout-minutes: 60
+    env:
+      BUILD_ROOT: /work
+      HOME: /root
+      RECAPTCHA_HELPER_GRADLE_USER_HOME: /root/.gradle-recaptcha-helper
+      TZ: UTC
+      LC_ALL: C
+    steps:
+      - name: Checkout
+        run: |
+          : "${BUILD_ROOT:?}"
+          rm -rf "$BUILD_ROOT"
+          mkdir -p "$BUILD_ROOT"
+          cd "$BUILD_ROOT"
+          git init -q .
+          git remote add origin "$FORGEJO_SERVER_URL/$FORGEJO_REPOSITORY.git"
+          git fetch -q --depth 1 origin "$FORGEJO_REF_NAME"
+          git checkout -q "$FORGEJO_SHA"
+      - name: Set up the build environment
+        run: cd "${BUILD_ROOT:?}" && sh ci/setup-build.sh
+      - name: Build
+        run: cd "${BUILD_ROOT:?}" && nix run .#build-android
+      - name: Collect APKs
+        run: |
+          : "${BUILD_ROOT:?}"
+          apks=("$BUILD_ROOT"/app/build/outputs/apk/release/*-release-unsigned.apk)
+          [ ${#apks[@]} -eq 1 ] && [ -f "${apks[0]}" ]
+          mkdir -p out
+          cp "${apks[@]}" out/
+      - name: Upload
+        uses: https://code.forgejo.org/forgejo/upload-artifact@16871d9e8cfcf27ff31822cac382bbb5450f1e1e
+        with:
+          name: unsigned-${{ matrix.provider }}
+          path: out/
+          retention-days: 1
+
+  compare:
+    needs: build
+    if: inputs.providers == 'all'
+    runs-on: ["verify", "hetzner"]
+    timeout-minutes: 12
+    steps:
+      - name: Download every builder's output
+        uses: https://code.forgejo.org/forgejo/download-artifact@d8d0a99033603453ad2255e58720b460a0555e1e
+        with:
+          path: artifacts
+      - name: Compare across builders
+        env:
+          BUILDERS: 3
+        run: |
+          set -euo pipefail
+          mkdir -p verified
+          cd artifacts
+          found=$(ls -1d unsigned-*/ | wc -l)
+          if [ "$found" -ne "${BUILDERS:?}" ]; then
+            echo "expected $BUILDERS builder artifacts, downloaded $found"
+            ls -1d unsigned-*/ || true
+            exit 1
+          fi
+          apk="app-release-unsigned.apk"
+          sums=$(sha256sum unsigned-*/"$apk")
+          if [ "$(echo "$sums" | wc -l)" -ne "$BUILDERS" ]; then
+            echo "expected $BUILDERS copies"; echo "$sums"; exit 1
+          fi
+          if [ "$(echo "$sums" | awk '{print $1}' | sort -u | wc -l)" -ne 1 ]; then
+            echo "NOT reproducible"; echo "$sums"; exit 1
+          fi
+          cp "$(echo "$sums" | awk 'NR==1{print $2}')" ../verified/"$apk"
+          echo "reproducible $(echo "$sums" | awk 'NR==1{print $1}')"
+          ls -1 ../verified
+      - name: Publish verified artifact
+        uses: https://code.forgejo.org/forgejo/upload-artifact@16871d9e8cfcf27ff31822cac382bbb5450f1e1e
+        with:
+          name: open-grind-recaptcha-helper-unsigned
+          path: verified/

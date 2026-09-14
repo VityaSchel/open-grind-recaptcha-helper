@@ -1,0 +1,17 @@
+services:
+  build:
+    platform: linux/amd64
+    build:
+      context: .
+    image: recaptcha-helper-build
+    init: true
+    working_dir: /work
+    volumes:
+      - .:/work
+      - recaptcha-helper-nix:/nix
+      - recaptcha-helper-gradle:/root/.gradle
+    command: ["nix", "run", ".#build-android"]
+
+volumes:
+  recaptcha-helper-nix:
+  recaptcha-helper-gradle:
