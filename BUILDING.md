@@ -86,6 +86,5 @@ Follow [Open Grind's REPRODUCIBILITY.md](https://git.opengrind.org/open-grind/op
 | Gradle distribution (+ SHA-256)                        | `gradle/wrapper/gradle-wrapper.properties` |
 | Android Gradle Plugin, reCAPTCHA Enterprise SDK, JUnit | `gradle/libs.versions.toml`                |
 | compileSdk / minSdk / targetSdk, build-tools           | `app/build.gradle.kts`                     |
-| R8 keep rules                                          | `app/proguard-rules.pro`                   |
 | JDK + Android SDK (Nix build)                          | `flake.nix`                                |
 | nixpkgs revision                                       | `flake.lock`                               |
