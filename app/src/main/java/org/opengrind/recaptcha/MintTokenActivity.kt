@@ -38,12 +38,14 @@ class MintTokenActivity : Activity() {
         finish()
     }
 
-    private fun isCallerTrusted(): Boolean {
-        val caller = callingPackage ?: return false
-        if (caller != MintContract.TRUSTED_CALLER_PACKAGE) return false
-        return packageManager.checkSignatures(caller, packageName) ==
-            PackageManager.SIGNATURE_MATCH
-    }
+    private fun isCallerTrusted(): Boolean =
+        OpenGrindTrust.trusts(callingPackage) { name, sha256 ->
+            packageManager.hasSigningCertificate(
+                name,
+                sha256,
+                PackageManager.CERT_INPUT_SHA256,
+            )
+        }
 
     private fun isGrindrInstalled(): Boolean = try {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

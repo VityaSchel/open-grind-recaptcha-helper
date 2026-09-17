@@ -3,10 +3,6 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <permission
-        android:name="org.opengrind.recaptcha.permission.MINT_TOKEN"
-        android:protectionLevel="signature" />
-
     <queries>
         <package android:name="org.opengrind" />
         <package android:name="com.grindrapp.android" />
@@ -25,8 +21,7 @@
             android:name=".MintTokenActivity"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|uiMode|density|fontScale|locale|layoutDirection"
             android:excludeFromRecents="true"
-            android:exported="true"
-            android:permission="org.opengrind.recaptcha.permission.MINT_TOKEN">
+            android:exported="true">
             <intent-filter>
                 <action android:name="org.opengrind.recaptcha.action.MINT_TOKEN" />
 
